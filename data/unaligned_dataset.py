@@ -6,7 +6,9 @@ import torch
 from pathlib import Path
 
 def make_dataset(dir_path):
-    return sorted([str(p) for p in Path(dir_path).rglob('*.png')])
+    # return sorted([str(p) for p in Path(dir_path).rglob('*.png')])
+    extensions = {'.png', '.jpg', '.jpeg'}
+    return sorted([str(p) for p in Path(dir_path).rglob('*') if p.suffix.lower() in extensions])
 
 class UnalignedDataset(BaseDataset):
     def __init__(self, opt):
@@ -35,7 +37,7 @@ class UnalignedDataset(BaseDataset):
         A_img = Image.open(A_path).convert('RGB')
         B_img = Image.open(B_path).convert('RGB')
 
-        assert A_img.size[0] == 256 and A_img.size[0] == 256 and B_img.size[0] == 256 and B_img.size[0] == 256 
+        # assert A_img.size[0] == 256 and A_img.size[0] == 256 and B_img.size[0] == 256 and B_img.size[0] == 256
         
         A = self.transform_A(A_img)
         B = self.transform_B(B_img)
