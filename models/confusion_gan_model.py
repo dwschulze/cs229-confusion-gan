@@ -150,9 +150,24 @@ class ConfusionGANModel(BaseModel):
 
 
 
+    def batched_insert_fea_loss(self, all_real_feas, all_fake_feas, netE, fake_label, num_ref=32):
+        """Handle insert_fea_loss for any batch_size by splitting per sample."""
+        batch_size = all_fake_feas.shape[0]
+        C, H, W = all_real_feas.shape[1:]
+        # all_real_feas: [num_ref * batch_size, C, H, W] from concat of Rs list
+        # Reshape to [num_ref, batch_size, C, H, W] then [batch_size, num_ref, C, H, W]
+        real_per_sample = all_real_feas.reshape(num_ref, batch_size, C, H, W).permute(1, 0, 2, 3, 4).contiguous()
+
+        total_loss = 0
+        for i in range(batch_size):
+            total_loss += self.insert_fea_loss(real_per_sample[i], all_fake_feas[i:i+1], netE, fake_label)
+        return total_loss / batch_size
+
     def backward_E_basic(self, netE, real_Rs, fake):
-        loss_E_mix_fake = self.insert_fea_loss(real_Rs, fake, netE, fake_label=1)
-        loss_E_mix_rel = self.insert_fea_loss(real_Rs, fake, netE, fake_label=0)
+        # loss_E_mix_fake = self.insert_fea_loss(real_Rs, fake, netE, fake_label=1)
+        # loss_E_mix_rel = self.insert_fea_loss(real_Rs, fake, netE, fake_label=0)
+        loss_E_mix_fake = self.batched_insert_fea_loss(real_Rs, fake, netE, fake_label=1)
+        loss_E_mix_rel = self.batched_insert_fea_loss(real_Rs, fake, netE, fake_label=0)
 
         loss_E = (loss_E_mix_fake + loss_E_mix_rel) * 0.5
         loss_E.backward()
@@ -218,9 +233,11 @@ class ConfusionGANModel(BaseModel):
         real_feas_HE = self.netD_B(torch.concat(self.Rs_HE, 0), 'triplesem').detach()
         fake_feas_HE = self.netD_B(self.fake_A, 'triplesem').detach()
 
-        self.loss_E_IHC = self.insert_fea_loss(real_feas_IHC, fake_feas_IHC, self.netE_B, fake_label=0)
+        # self.loss_E_IHC = self.insert_fea_loss(real_feas_IHC, fake_feas_IHC, self.netE_B, fake_label=0)
+        # self.loss_E_HE = self.insert_fea_loss(real_feas_HE, fake_feas_HE, self.netE_A, fake_label=0)
+        self.loss_E_IHC = self.batched_insert_fea_loss(real_feas_IHC, fake_feas_IHC, self.netE_B, fake_label=0)
 
-        self.loss_E_HE = self.insert_fea_loss(real_feas_HE, fake_feas_HE, self.netE_A, fake_label=0)
+        self.loss_E_HE = self.batched_insert_fea_loss(real_feas_HE, fake_feas_HE, self.netE_A, fake_label=0)
         
         
         # Forward cycle loss || G_B(G_A(A)) - A||
