@@ -1,0 +1,15 @@
+[project]
+name = "confusion-gan"
+version = "0.1.0"
+description = "Virtual Immunohistochemistry Staining for Histological Images Assisted by Weakly-supervised Learning"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.0",
+    "torchvision>=0.15",
+    "numpy>=1.24",
+    "pillow>=9.0",
+    "dominate>=2.8",
+]
+
+[dependency-groups]
+dev = ["wandb"]
