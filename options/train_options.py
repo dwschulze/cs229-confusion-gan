@@ -38,7 +38,7 @@ class TrainOptions(BaseOptions):
 
 
         parser.add_argument('--A_lables', type=str, default='', help='dictionary which stores H&E patch-level psuedo-labels, obtained by One-Class-Classifier or from adjacent sections')
-        parser.add_argument('--Max_Iteration', type=int)
+        parser.add_argument('--Max_Iteration', type=int, default=0, help='maximum total training iterations (0 = unlimited, controlled by n_epochs)')
 
 
         self.isTrain = True
