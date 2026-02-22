@@ -20,6 +20,7 @@ class BaseOptions():
     def initialize(self, parser):
         """Define the common options that are used in both training and test."""
         # basic parameters
+        parser.add_argument('--dataroot', type=str, default=None, help='path to test images')
         parser.add_argument('--data_train_A', required=False, help='path to H&E images')
         parser.add_argument('--data_train_B', required=False, help='path to IHC images')
         parser.add_argument('--pretrained_IHC_Classifier', required=False, help='path to IHC_checkpoints') 
