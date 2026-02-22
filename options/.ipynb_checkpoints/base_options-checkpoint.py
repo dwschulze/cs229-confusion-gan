@@ -23,7 +23,7 @@ class BaseOptions():
         parser.add_argument('--data_train_A', required=True, help='path to H&E images')
         parser.add_argument('--data_train_B', required=True, help='path to IHC images')
         parser.add_argument('--pretrained_IHC_Classifier', required=True, help='path to IHC_checkpoints')
-        parser.add_argument('--ihc_cls_img_size', required = True, help = 'size of IHC images classifier was trained on') 
+        parser.add_argument('--ihc_cls_img_size', type = int, required = True, help = 'size of IHC images classifier was trained on') 
         parser.add_argument('--name', type=str, default='ConfusionGAN', help='name of the experiment. It decides where to store samples and models')
         parser.add_argument('--gpu_ids', type=str, default='3', help='gpu ids: e.g. 0  0,1,2, 0,2. use -1 for CPU')
         parser.add_argument('--checkpoints_dir', type=str, default='./checkpoints', help='models are saved here')

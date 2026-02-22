@@ -1,0 +1,229 @@
+_wandb:
+    value:
+        cli_version: 0.25.0
+        e:
+            brex2gfzh855b64e9cjczena5l548csj:
+                args:
+                    - --data_train_A
+                    - /workspace/organized_data/cs229_final_project/Train_dataset/HnE/processed_data/fourth-mm
+                    - --data_train_B
+                    - /workspace/organized_data/cs229_final_project/Train_dataset/IHC/processed_data/fourth-mm
+                    - --model
+                    - confusion_gan
+                    - --netG
+                    - unet_256
+                    - --netD
+                    - basic
+                    - --netE
+                    - basic_3d
+                    - --preprocess
+                    - resize_and_crop
+                    - --load_size
+                    - "1024"
+                    - --crop_size
+                    - "1024"
+                    - --pretrained_IHC_Classifier
+                    - /workspace/cs229-final-project/ihc_classifiers/ihc_classifier_256microns.pth
+                    - --A_lables
+                    - /workspace/organized_data/cs229_final_project/Train_dataset/HnE/train_Alabels.pt
+                    - --dataset_mode
+                    - unaligned
+                    - --direction
+                    - AtoB
+                    - --gpu_ids
+                    - "0"
+                    - --display_id
+                    - "0"
+                    - --Max_Iteration
+                    - "5000"
+                    - --print_freq
+                    - "100"
+                    - --batch_size
+                    - "8"
+                    - --ihc_cls_img_size
+                    - "1024"
+                    - --use_wandb
+                codePath: train.py
+                codePathLocal: train.py
+                cpu_count: 96
+                cpu_count_logical: 192
+                cudaVersion: "13.0"
+                disk:
+                    /:
+                        total: "322122547200"
+                        used: "256520192"
+                email: xarshmeetx@gmail.com
+                executable: /workspace/cs229-confusion-gan/.venv/bin/python3
+                git:
+                    commit: 980d46f534c5ec5e9624453fdfe2ffd9dbf841b7
+                    remote: git@github.com:dwschulze/cs229-confusion-gan.git
+                gpu: NVIDIA B200
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Blackwell
+                      cudaCores: 18944
+                      memoryTotal: "192265846784"
+                      name: NVIDIA B200
+                      uuid: GPU-a6fd2e17-b972-a3c2-8dbc-225165aeab53
+                host: d7d0d294e05c
+                memory:
+                    total: "2164177494016"
+                os: Linux-6.8.0-100-generic-x86_64-with-glibc2.39
+                program: /workspace/cs229-confusion-gan/train.py
+                python: CPython 3.12.3
+                root: /workspace/cs229-confusion-gan
+                startedAt: "2026-02-22T05:05:15.368595Z"
+                writerId: brex2gfzh855b64e9cjczena5l548csj
+        m: []
+        python_version: 3.12.3
+        t:
+            "1":
+                - 1
+                - 41
+            "2":
+                - 1
+                - 41
+            "3":
+                - 13
+                - 16
+            "4": 3.12.3
+            "5": 0.25.0
+            "9":
+                "2": CycleGAN-and-pix2pix
+            "12": 0.25.0
+            "13": linux-x86_64
+A_lables:
+    value: /workspace/organized_data/cs229_final_project/Train_dataset/HnE/train_Alabels.pt
+Max_Iteration:
+    value: 5000
+batch_size:
+    value: 8
+beta:
+    value: 1
+beta1:
+    value: 0.5
+checkpoints_dir:
+    value: ./checkpoints
+continue_train:
+    value: false
+crop_size:
+    value: 1024
+data_train_A:
+    value: /workspace/organized_data/cs229_final_project/Train_dataset/HnE/processed_data/fourth-mm
+data_train_B:
+    value: /workspace/organized_data/cs229_final_project/Train_dataset/IHC/processed_data/fourth-mm
+dataset_mode:
+    value: unaligned
+direction:
+    value: AtoB
+display_env:
+    value: main
+display_freq:
+    value: 400
+display_id:
+    value: 0
+display_ncols:
+    value: 4
+display_port:
+    value: 8097
+display_server:
+    value: http://localhost
+display_winsize:
+    value: 256
+epoch:
+    value: latest
+epoch_count:
+    value: 1
+gan_mode:
+    value: lsgan
+gpu_ids:
+    value:
+        - 0
+ihc_cls_img_size:
+    value: 1024
+init_gain:
+    value: 0.02
+init_type:
+    value: normal
+input_nc:
+    value: 3
+isTrain:
+    value: true
+lambda_A:
+    value: 10
+lambda_B:
+    value: 10
+lambda_identity:
+    value: 0.5
+load_iter:
+    value: 0
+load_size:
+    value: 1024
+lr:
+    value: 0.0002
+lr_decay_iters:
+    value: 50
+lr_policy:
+    value: linear
+max_dataset_size:
+    value: .inf
+model:
+    value: confusion_gan
+n_epochs:
+    value: 100
+n_epochs_decay:
+    value: 100
+n_layers_D:
+    value: 3
+name:
+    value: ConfusionGAN
+ndf:
+    value: 64
+netD:
+    value: basic
+netE:
+    value: basic_3d
+netG:
+    value: unet_256
+ngf:
+    value: 64
+no_dropout:
+    value: true
+no_flip:
+    value: false
+no_html:
+    value: false
+norm:
+    value: instance
+num_threads:
+    value: 1
+output_nc:
+    value: 3
+phase:
+    value: train
+pool_size:
+    value: 50
+preprocess:
+    value: resize_and_crop
+pretrained_IHC_Classifier:
+    value: /workspace/cs229-final-project/ihc_classifiers/ihc_classifier_256microns.pth
+print_freq:
+    value: 100
+save_by_iter:
+    value: true
+save_epoch_freq:
+    value: 5
+save_latest_freq:
+    value: 2000
+serial_batches:
+    value: false
+suffix:
+    value: ""
+update_html_freq:
+    value: 1000
+use_wandb:
+    value: true
+verbose:
+    value: false
+wandb_project_name:
+    value: ConfusionGAN

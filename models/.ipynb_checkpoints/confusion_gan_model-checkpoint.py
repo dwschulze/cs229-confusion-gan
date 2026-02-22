@@ -42,7 +42,7 @@ class ConfusionGANModel(BaseModel):
         
         
         
-        self.IHC_classfier = IHC_Classifier(img_size = opt.ihc_classifier_img_size).to(self.device)
+        self.IHC_classfier = IHC_Classifier(img_size = opt.ihc_cls_img_size).to(self.device)
         checkpoint = torch.load(self.opt.pretrained_IHC_Classifier, map_location='cpu')
         for k, v in self.IHC_classfier.named_parameters():
             v.requires_grad = False
