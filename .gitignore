@@ -21,6 +21,8 @@ uv.lock
 *.pt
 *.log
 checkpoints/
+wandb/
+results/
 
 # Data
 dataset/
