@@ -23,7 +23,7 @@ uv.lock
 checkpoints/
 wandb/
 results/
-
+test.results*/
 # Data
 dataset/
 *.png
