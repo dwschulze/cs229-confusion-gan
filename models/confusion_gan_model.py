@@ -21,7 +21,7 @@ class ConfusionGANModel(BaseModel):
 
     def __init__(self, opt):
         BaseModel.__init__(self, opt)
-        self.loss_names = ['D_A', 'G_A', 'cycle_A', 'idt_A', 'D_B', 'G_B', 'cycle_B', 'idt_B']
+        self.loss_names = ['D_A', 'G_A', 'cycle_A', 'idt_A', 'D_B', 'G_B', 'cycle_B', 'idt_B', 'E_IHC', 'E_HE', 'A_pos', 'G_E']
         visual_names_A = ['real_A', 'fake_B', 'rec_A']
         visual_names_B = ['real_B', 'fake_A', 'rec_B']
         if self.isTrain and self.opt.lambda_identity > 0.0:
