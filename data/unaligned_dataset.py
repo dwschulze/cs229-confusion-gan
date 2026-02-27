@@ -23,7 +23,7 @@ class UnalignedDataset(BaseDataset):
         self.A_size = len(self.A_paths)  # get the size of dataset A
         self.B_size = len(self.B_paths)  # get the size of dataset B
 
-        self.A_labels = torch.load(opt.A_lables) # opt.A_labels is a dictionary
+        self.A_labels = torch.load(opt.A_labels) # opt.A_labels is a dictionary
 
         self.transform_A = get_transform(self.opt, grayscale=False)
         self.transform_B = get_transform(self.opt, grayscale=False)
