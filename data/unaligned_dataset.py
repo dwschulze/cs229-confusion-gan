@@ -46,15 +46,9 @@ class UnalignedDataset(BaseDataset):
         # B_img = Image.open(B_path).convert('RGB')
 
         # assert A_img.size[0] == 256 and A_img.size[0] == 256 and B_img.size[0] == 256 and B_img.size[0] == 256
-# <<<<<<< HEAD
-#
-#         A = self.transform_A(A_img)
-#         B = self.transform_B(B_img)
-# =======
 
         A = self.A_cache[index]
         B = self.B_cache[index_B]
-# >>>>>>> main
 
         Rs_IHC, Rs_HE = [], []
         for _ in range(32):
