@@ -80,6 +80,10 @@ if __name__ == '__main__':
 
             iter_data_time = time.time()
 
+        if opt.Max_Iteration > 0 and total_iters >= opt.Max_Iteration:
+            print('Reached Max_Iteration %d, stopping training.' % opt.Max_Iteration)
+            break
+
         if epoch % opt.save_epoch_freq == 0:              # cache our model every <save_epoch_freq> epochs
             print('saving the model at the end of epoch %d, iters %d' % (epoch, total_iters))
             model.save_networks('latest')

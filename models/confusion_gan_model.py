@@ -47,7 +47,6 @@ class ConfusionGANModel(BaseModel):
         for k, v in self.IHC_classfier.named_parameters():
             v.requires_grad = False
         print(self.IHC_classfier.load_state_dict(checkpoint['model_state_dict']))
-        self.IHC_classfier = self.IHC_classfier.to(self.gpu_ids[0])
 
 
         if self.isTrain:  # define discriminators
@@ -207,7 +206,6 @@ class ConfusionGANModel(BaseModel):
         lambda_idt = self.opt.lambda_identity
         lambda_A = self.opt.lambda_A
         lambda_B = self.opt.lambda_B
-        beta = self.opt.beta
         # Identity loss
         if lambda_idt > 0:
             # G_A should be identity if real_B is fed: ||G_A(B) - B||
@@ -245,10 +243,8 @@ class ConfusionGANModel(BaseModel):
         # Backward cycle loss || G_A(G_B(B)) - B||
         self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B
         # combined loss and calculate gradients
-        self.loss_G_E =  (self.loss_E_IHC + self.loss_E_HE) * 1
+        self.loss_G_E =  (self.loss_E_IHC + self.loss_E_HE)
         
-        self.loss_A_pos = self.loss_A_pos
-
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B + self.loss_G_E + self.loss_A_pos
         self.loss_G.backward()
 
