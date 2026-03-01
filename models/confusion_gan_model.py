@@ -194,7 +194,7 @@ class ConfusionGANModel(BaseModel):
         self.loss_E_IHC = self.backward_E_basic(self.netE_B, real_feas_IHC, fake_feas_IHC.detach())
 
     def backward_E_HE(self):
-        fake_A = self.fake_B_pool.query(self.fake_A)
+        fake_A = self.fake_A_pool.query(self.fake_A)
 
         real_feas_HE = self.netD_B(torch.concat(self.Rs_HE, 0), 'triplesem').detach()
         fake_feas_HE = self.netD_B(fake_A, 'triplesem').detach()
@@ -227,11 +227,11 @@ class ConfusionGANModel(BaseModel):
 
 
 
-        real_feas_IHC = self.netD_A(torch.concat(self.Rs_IHC, 0), 'triplesem').detach()
-        fake_feas_IHC = self.netD_A(self.fake_B, 'triplesem').detach()
+        real_feas_IHC = self.netD_A(torch.concat(self.Rs_IHC, 0), 'triplesem')
+        fake_feas_IHC = self.netD_A(self.fake_B, 'triplesem')
 
         real_feas_HE = self.netD_B(torch.concat(self.Rs_HE, 0), 'triplesem').detach()
-        fake_feas_HE = self.netD_B(self.fake_A, 'triplesem').detach()
+        fake_feas_HE = self.netD_B(self.fake_A, 'triplesem')
 
         # self.loss_E_IHC = self.insert_fea_loss(real_feas_IHC, fake_feas_IHC, self.netE_B, fake_label=0)
         # self.loss_E_HE = self.insert_fea_loss(real_feas_HE, fake_feas_HE, self.netE_A, fake_label=0)
