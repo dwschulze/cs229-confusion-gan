@@ -96,7 +96,10 @@ class ConfusionGANModel(BaseModel):
         self.rec_A = self.netG_B(self.fake_B)   # G_B(G_A(A))
         self.fake_A = self.netG_B(self.real_B)  # G_B(B)
         self.rec_B = self.netG_A(self.fake_A)   # G_A(G_B(B))
-        self.fake_B_label = self.IHC_classfier(self.fake_B)
+        cls_input = self.fake_B
+        if cls_input.shape[-1] != self.opt.ihc_cls_img_size:
+            cls_input = nn.functional.interpolate(cls_input, size=self.opt.ihc_cls_img_size, mode='bilinear', align_corners=False)
+        self.fake_B_label = self.IHC_classfier(cls_input)
 
     def backward_D_basic(self, netD, real, fake):
         # Real
