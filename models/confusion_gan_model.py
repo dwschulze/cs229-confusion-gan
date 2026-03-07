@@ -5,7 +5,8 @@ from .base_model import BaseModel
 from . import networks
 import random
 import torch.nn as nn
-from torch.cuda.amp import autocast, GradScaler
+from torch.amp import autocast
+from torch.cuda.amp import GradScaler
 from models.IHC_Classifier import IHC_Classifier
 
 
@@ -96,7 +97,7 @@ class ConfusionGANModel(BaseModel):
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
-        with autocast(enabled=self.fp16):
+        with autocast('cuda', enabled=self.fp16):
             self.fake_B = self.netG_A(self.real_A)  # G_A(A)
             self.rec_A = self.netG_B(self.fake_B)   # G_B(G_A(A))
             self.fake_A = self.netG_B(self.real_B)  # G_B(B)
@@ -107,7 +108,7 @@ class ConfusionGANModel(BaseModel):
             self.fake_B_label = self.IHC_classfier(cls_input)
 
     def backward_D_basic(self, netD, real, fake):
-        with autocast(enabled=self.fp16):
+        with autocast('cuda', enabled=self.fp16):
             # Real
             pred_real = netD(real)
             loss_D_real = self.criterionGAN(pred_real, True)
@@ -172,7 +173,7 @@ class ConfusionGANModel(BaseModel):
         return total_loss / batch_size
 
     def backward_E_basic(self, netE, real_Rs, fake):
-        with autocast(enabled=self.fp16):
+        with autocast('cuda', enabled=self.fp16):
             loss_E_mix_fake = self.batched_insert_fea_loss(real_Rs, fake, netE, fake_label=1)
             loss_E_mix_rel = self.batched_insert_fea_loss(real_Rs, fake, netE, fake_label=0)
             loss_E = (loss_E_mix_fake + loss_E_mix_rel) * 0.5
@@ -193,14 +194,14 @@ class ConfusionGANModel(BaseModel):
 
     def backward_E_IHC(self):
         fake_B = self.fake_B_pool.query(self.fake_B)
-        with autocast(enabled=self.fp16):
+        with autocast('cuda', enabled=self.fp16):
             real_feas_IHC = self.netD_A(torch.concat(self.Rs_IHC, 0), 'triplesem').detach()
             fake_feas_IHC = self.netD_A(fake_B, 'triplesem').detach()
         self.loss_E_IHC = self.backward_E_basic(self.netE_B, real_feas_IHC, fake_feas_IHC.detach())
 
     def backward_E_HE(self):
         fake_A = self.fake_A_pool.query(self.fake_A)
-        with autocast(enabled=self.fp16):
+        with autocast('cuda', enabled=self.fp16):
             real_feas_HE = self.netD_B(torch.concat(self.Rs_HE, 0), 'triplesem').detach()
             fake_feas_HE = self.netD_B(fake_A, 'triplesem').detach()
         self.loss_E_HE = self.backward_E_basic(self.netE_A, real_feas_HE, fake_feas_HE.detach())
@@ -211,7 +212,7 @@ class ConfusionGANModel(BaseModel):
         lambda_idt = self.opt.lambda_identity
         lambda_A = self.opt.lambda_A
         lambda_B = self.opt.lambda_B
-        with autocast(enabled=self.fp16):
+        with autocast('cuda', enabled=self.fp16):
             # Identity loss
             if lambda_idt > 0:
                 # G_A should be identity if real_B is fed: ||G_A(B) - B||
@@ -227,7 +228,7 @@ class ConfusionGANModel(BaseModel):
             self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B), True)
             self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True)
 
-            self.loss_A_pos = self.Patho_loss(self.fake_B_label, self.A_label)
+            self.loss_A_pos = self.Patho_loss(self.fake_B_label.float(), self.A_label.float())
 
             real_feas_IHC = self.netD_A(torch.concat(self.Rs_IHC, 0), 'triplesem')
             fake_feas_IHC = self.netD_A(self.fake_B, 'triplesem')
