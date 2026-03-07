@@ -228,8 +228,9 @@ class ConfusionGANModel(BaseModel):
             self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B), True)
             self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True)
 
-            self.loss_A_pos = self.Patho_loss(self.fake_B_label.float(), self.A_label.float())
+        self.loss_A_pos = self.Patho_loss(self.fake_B_label.float(), self.A_label.float())
 
+        with autocast('cuda', enabled=self.fp16):
             real_feas_IHC = self.netD_A(torch.concat(self.Rs_IHC, 0), 'triplesem')
             fake_feas_IHC = self.netD_A(self.fake_B, 'triplesem')
 
