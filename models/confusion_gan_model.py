@@ -5,6 +5,7 @@ from .base_model import BaseModel
 from . import networks
 import random
 import torch.nn as nn
+from torch.cuda.amp import autocast, GradScaler
 from models.IHC_Classifier import IHC_Classifier
 
 
@@ -80,6 +81,9 @@ class ConfusionGANModel(BaseModel):
             self.optimizers.append(self.optimizer_D)
             self.optimizers.append(self.optimizer_E)
 
+        self.fp16 = getattr(opt, 'fp16', False) and torch.cuda.is_available()
+        self.scaler = GradScaler(enabled=self.fp16)
+
     def set_input(self, input):
         AtoB = self.opt.direction == 'AtoB'
         self.real_A = input['A' if AtoB else 'B'].to(self.device)
@@ -92,22 +96,27 @@ class ConfusionGANModel(BaseModel):
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
-        self.fake_B = self.netG_A(self.real_A)  # G_A(A)
-        self.rec_A = self.netG_B(self.fake_B)   # G_B(G_A(A))
-        self.fake_A = self.netG_B(self.real_B)  # G_B(B)
-        self.rec_B = self.netG_A(self.fake_A)   # G_A(G_B(B))
-        self.fake_B_label = self.IHC_classfier(self.fake_B)
+        with autocast(enabled=self.fp16):
+            self.fake_B = self.netG_A(self.real_A)  # G_A(A)
+            self.rec_A = self.netG_B(self.fake_B)   # G_B(G_A(A))
+            self.fake_A = self.netG_B(self.real_B)  # G_B(B)
+            self.rec_B = self.netG_A(self.fake_A)   # G_A(G_B(B))
+            cls_input = self.fake_B
+            if cls_input.shape[-1] != self.opt.ihc_cls_img_size:
+                cls_input = nn.functional.interpolate(cls_input, size=self.opt.ihc_cls_img_size, mode='bilinear', align_corners=False)
+            self.fake_B_label = self.IHC_classfier(cls_input)
 
     def backward_D_basic(self, netD, real, fake):
-        # Real
-        pred_real = netD(real)
-        loss_D_real = self.criterionGAN(pred_real, True)
-        # Fake
-        pred_fake = netD(fake.detach())
-        loss_D_fake = self.criterionGAN(pred_fake, False)
-        # Combined loss and calculate gradients
-        loss_D = (loss_D_real + loss_D_fake) * 0.5
-        loss_D.backward()
+        with autocast(enabled=self.fp16):
+            # Real
+            pred_real = netD(real)
+            loss_D_real = self.criterionGAN(pred_real, True)
+            # Fake
+            pred_fake = netD(fake.detach())
+            loss_D_fake = self.criterionGAN(pred_fake, False)
+            # Combined loss and calculate gradients
+            loss_D = (loss_D_real + loss_D_fake) * 0.5
+        self.scaler.scale(loss_D).backward()
         return loss_D
 
 
@@ -163,13 +172,11 @@ class ConfusionGANModel(BaseModel):
         return total_loss / batch_size
 
     def backward_E_basic(self, netE, real_Rs, fake):
-        # loss_E_mix_fake = self.insert_fea_loss(real_Rs, fake, netE, fake_label=1)
-        # loss_E_mix_rel = self.insert_fea_loss(real_Rs, fake, netE, fake_label=0)
-        loss_E_mix_fake = self.batched_insert_fea_loss(real_Rs, fake, netE, fake_label=1)
-        loss_E_mix_rel = self.batched_insert_fea_loss(real_Rs, fake, netE, fake_label=0)
-
-        loss_E = (loss_E_mix_fake + loss_E_mix_rel) * 0.5
-        loss_E.backward()
+        with autocast(enabled=self.fp16):
+            loss_E_mix_fake = self.batched_insert_fea_loss(real_Rs, fake, netE, fake_label=1)
+            loss_E_mix_rel = self.batched_insert_fea_loss(real_Rs, fake, netE, fake_label=0)
+            loss_E = (loss_E_mix_fake + loss_E_mix_rel) * 0.5
+        self.scaler.scale(loss_E).backward()
 
         return loss_E
 
@@ -186,18 +193,16 @@ class ConfusionGANModel(BaseModel):
 
     def backward_E_IHC(self):
         fake_B = self.fake_B_pool.query(self.fake_B)
-
-        real_feas_IHC = self.netD_A(torch.concat(self.Rs_IHC, 0), 'triplesem').detach()
-        fake_feas_IHC = self.netD_A(fake_B, 'triplesem').detach()
-
+        with autocast(enabled=self.fp16):
+            real_feas_IHC = self.netD_A(torch.concat(self.Rs_IHC, 0), 'triplesem').detach()
+            fake_feas_IHC = self.netD_A(fake_B, 'triplesem').detach()
         self.loss_E_IHC = self.backward_E_basic(self.netE_B, real_feas_IHC, fake_feas_IHC.detach())
 
     def backward_E_HE(self):
         fake_A = self.fake_A_pool.query(self.fake_A)
-
-        real_feas_HE = self.netD_B(torch.concat(self.Rs_HE, 0), 'triplesem').detach()
-        fake_feas_HE = self.netD_B(fake_A, 'triplesem').detach()
-
+        with autocast(enabled=self.fp16):
+            real_feas_HE = self.netD_B(torch.concat(self.Rs_HE, 0), 'triplesem').detach()
+            fake_feas_HE = self.netD_B(fake_A, 'triplesem').detach()
         self.loss_E_HE = self.backward_E_basic(self.netE_A, real_feas_HE, fake_feas_HE.detach())
 
     
@@ -206,47 +211,42 @@ class ConfusionGANModel(BaseModel):
         lambda_idt = self.opt.lambda_identity
         lambda_A = self.opt.lambda_A
         lambda_B = self.opt.lambda_B
-        # Identity loss
-        if lambda_idt > 0:
-            # G_A should be identity if real_B is fed: ||G_A(B) - B||
-            self.idt_A = self.netG_A(self.real_B)
-            self.loss_idt_A = self.criterionIdt(self.idt_A, self.real_B) * lambda_B * lambda_idt
-            # G_B should be identity if real_A is fed: ||G_B(A) - A||
-            self.idt_B = self.netG_B(self.real_A)
-            self.loss_idt_B = self.criterionIdt(self.idt_B, self.real_A) * lambda_A * lambda_idt
-        else:
-            self.loss_idt_A = 0
-            self.loss_idt_B = 0
+        with autocast(enabled=self.fp16):
+            # Identity loss
+            if lambda_idt > 0:
+                # G_A should be identity if real_B is fed: ||G_A(B) - B||
+                self.idt_A = self.netG_A(self.real_B)
+                self.loss_idt_A = self.criterionIdt(self.idt_A, self.real_B) * lambda_B * lambda_idt
+                # G_B should be identity if real_A is fed: ||G_B(A) - A||
+                self.idt_B = self.netG_B(self.real_A)
+                self.loss_idt_B = self.criterionIdt(self.idt_B, self.real_A) * lambda_A * lambda_idt
+            else:
+                self.loss_idt_A = 0
+                self.loss_idt_B = 0
 
-        self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B), True)
-        self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True)
-        
-        self.loss_A_pos = self.Patho_loss(self.fake_B_label, self.A_label)
+            self.loss_G_A = self.criterionGAN(self.netD_A(self.fake_B), True)
+            self.loss_G_B = self.criterionGAN(self.netD_B(self.fake_A), True)
 
+            self.loss_A_pos = self.Patho_loss(self.fake_B_label, self.A_label)
 
+            real_feas_IHC = self.netD_A(torch.concat(self.Rs_IHC, 0), 'triplesem')
+            fake_feas_IHC = self.netD_A(self.fake_B, 'triplesem')
 
-        real_feas_IHC = self.netD_A(torch.concat(self.Rs_IHC, 0), 'triplesem')
-        fake_feas_IHC = self.netD_A(self.fake_B, 'triplesem')
+            real_feas_HE = self.netD_B(torch.concat(self.Rs_HE, 0), 'triplesem').detach()
+            fake_feas_HE = self.netD_B(self.fake_A, 'triplesem')
 
-        real_feas_HE = self.netD_B(torch.concat(self.Rs_HE, 0), 'triplesem').detach()
-        fake_feas_HE = self.netD_B(self.fake_A, 'triplesem')
+            self.loss_E_IHC = self.batched_insert_fea_loss(real_feas_IHC, fake_feas_IHC, self.netE_B, fake_label=0)
+            self.loss_E_HE = self.batched_insert_fea_loss(real_feas_HE, fake_feas_HE, self.netE_A, fake_label=0)
 
-        # self.loss_E_IHC = self.insert_fea_loss(real_feas_IHC, fake_feas_IHC, self.netE_B, fake_label=0)
-        # self.loss_E_HE = self.insert_fea_loss(real_feas_HE, fake_feas_HE, self.netE_A, fake_label=0)
-        self.loss_E_IHC = self.batched_insert_fea_loss(real_feas_IHC, fake_feas_IHC, self.netE_B, fake_label=0)
+            # Forward cycle loss || G_B(G_A(A)) - A||
+            self.loss_cycle_A = self.criterionCycle(self.rec_A, self.real_A) * lambda_A
+            # Backward cycle loss || G_A(G_B(B)) - B||
+            self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B
+            # combined loss and calculate gradients
+            self.loss_G_E = (self.loss_E_IHC + self.loss_E_HE)
 
-        self.loss_E_HE = self.batched_insert_fea_loss(real_feas_HE, fake_feas_HE, self.netE_A, fake_label=0)
-        
-        
-        # Forward cycle loss || G_B(G_A(A)) - A||
-        self.loss_cycle_A = self.criterionCycle(self.rec_A, self.real_A) * lambda_A
-        # Backward cycle loss || G_A(G_B(B)) - B||
-        self.loss_cycle_B = self.criterionCycle(self.rec_B, self.real_B) * lambda_B
-        # combined loss and calculate gradients
-        self.loss_G_E =  (self.loss_E_IHC + self.loss_E_HE)
-        
-        self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B + self.loss_G_E + self.loss_A_pos
-        self.loss_G.backward()
+            self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B + self.loss_G_E + self.loss_A_pos
+        self.scaler.scale(self.loss_G).backward()
 
     def optimize_parameters(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
@@ -257,18 +257,19 @@ class ConfusionGANModel(BaseModel):
         self.set_requires_grad([self.netE_A,self.netE_B], False)
         self.optimizer_G.zero_grad()  # set G_A and G_B's gradients to zero
         self.backward_G()             # calculate gradients for G_A and G_B
-        self.optimizer_G.step()       # update G_A and G_B's weights
+        self.scaler.step(self.optimizer_G)
         # D_A and D_B
         self.set_requires_grad([self.netD_A, self.netD_B], True)
         self.set_requires_grad([self.netE_A,self.netE_B], False)
         self.optimizer_D.zero_grad()   # set D_A and D_B's gradients to zero
         self.backward_D_A()      # calculate gradients for D_A
         self.backward_D_B()      # calculate graidents for D_B
-        self.optimizer_D.step()  # update D_A and D_B's weights
+        self.scaler.step(self.optimizer_D)
         # E_A and E_B
         self.set_requires_grad([self.netD_A, self.netD_B], False)
         self.set_requires_grad([self.netE_A,self.netE_B], True)
-        self.optimizer_E.zero_grad() 
+        self.optimizer_E.zero_grad()
         self.backward_E_HE()
         self.backward_E_IHC()
-        self.optimizer_E.step() 
+        self.scaler.step(self.optimizer_E)
+        self.scaler.update()

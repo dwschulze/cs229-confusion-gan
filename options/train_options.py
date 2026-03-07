@@ -39,6 +39,7 @@ class TrainOptions(BaseOptions):
 
         parser.add_argument('--A_labels', type=str, default='', help='dictionary which stores H&E patch-level psuedo-labels, obtained by One-Class-Classifier or from adjacent sections')
         parser.add_argument('--Max_Iteration', type=int, default=0, help='maximum total training iterations (0 = unlimited, controlled by n_epochs)')
+        parser.add_argument('--fp16', action='store_true', help='use mixed-precision (fp16) training to reduce GPU memory')
 
 
         self.isTrain = True
