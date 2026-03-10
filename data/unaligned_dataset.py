@@ -51,13 +51,13 @@ class UnalignedDataset(BaseDataset):
                 self.A_cache.append(self.transform_A(Image.open(p).convert('RGB')))
                 if i <= 5:
                     print('[TRACE] Image %d done' % i, flush=True)
-            if (i + 1) % 1000 == 0:
+            if (i + 1) % 100 == 0:
                 print('  A: %d / %d' % (i + 1, self.A_size), flush=True)
         print('Pre-loading dataset B (%d images)...' % self.B_size, flush=True)
         self.B_cache = []
         for i, p in enumerate(self.B_paths):
             self.B_cache.append(self.transform_B(Image.open(p).convert('RGB')))
-            if (i + 1) % 1000 == 0:
+            if (i + 1) % 100 == 0:
                 print('  B: %d / %d' % (i + 1, self.B_size), flush=True)
         print('Pre-loading complete.', flush=True)
 
