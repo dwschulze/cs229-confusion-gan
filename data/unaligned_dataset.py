@@ -17,49 +17,25 @@ class UnalignedDataset(BaseDataset):
 
         self.dir_A = opt.data_train_A
         self.dir_B = opt.data_train_B
-        print('[TRACE] Scanning dataset A paths...', flush=True)
         self.A_paths = make_dataset(self.dir_A)
-        print('[TRACE] Found %d A paths. Scanning dataset B paths...' % len(self.A_paths), flush=True)
         self.B_paths = make_dataset(self.dir_B)
-        print('[TRACE] Found %d B paths.' % len(self.B_paths), flush=True)
 
         self.A_size = len(self.A_paths)  # get the size of dataset A
         self.B_size = len(self.B_paths)  # get the size of dataset B
 
-        print('[TRACE] Loading A_labels...', flush=True)
         self.A_labels = torch.load(opt.A_labels) # opt.A_labels is a dictionary
-        print('[TRACE] A_labels loaded. Creating transforms...', flush=True)
+
         self.transform_A = get_transform(self.opt, grayscale=False)
         self.transform_B = get_transform(self.opt, grayscale=False)
         self.transform = get_transform(self.opt, grayscale=False)
 
         # Pre-load and pre-transform all images into RAM to avoid
         # repeated disk I/O for the 32 reference images per iteration
-        print('Pre-loading dataset A (%d images)...' % self.A_size, flush=True)
-        self.A_cache = []
-        for i, p in enumerate(self.A_paths):
-            if i == 0:
-                print('[TRACE] Loading first image: %s' % p, flush=True)
-                img = Image.open(p).convert('RGB')
-                print('[TRACE] Image opened, applying transform...', flush=True)
-                t = self.transform_A(img)
-                print('[TRACE] Transform done, shape=%s' % str(t.shape), flush=True)
-                self.A_cache.append(t)
-            else:
-                if i <= 5:
-                    print('[TRACE] Loading image %d: %s' % (i, p), flush=True)
-                self.A_cache.append(self.transform_A(Image.open(p).convert('RGB')))
-                if i <= 5:
-                    print('[TRACE] Image %d done' % i, flush=True)
-            if (i + 1) % 100 == 0:
-                print('  A: %d / %d' % (i + 1, self.A_size), flush=True)
-        print('Pre-loading dataset B (%d images)...' % self.B_size, flush=True)
-        self.B_cache = []
-        for i, p in enumerate(self.B_paths):
-            self.B_cache.append(self.transform_B(Image.open(p).convert('RGB')))
-            if (i + 1) % 100 == 0:
-                print('  B: %d / %d' % (i + 1, self.B_size), flush=True)
-        print('Pre-loading complete.', flush=True)
+        print('Pre-loading dataset A (%d images)...' % self.A_size)
+        self.A_cache = [self.transform_A(Image.open(p).convert('RGB')) for p in self.A_paths]
+        print('Pre-loading dataset B (%d images)...' % self.B_size)
+        self.B_cache = [self.transform_B(Image.open(p).convert('RGB')) for p in self.B_paths]
+        print('Pre-loading complete.')
 
     def __getitem__(self, index):
         A_path = self.A_paths[index]  # make sure index is within then range

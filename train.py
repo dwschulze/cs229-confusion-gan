@@ -33,21 +33,15 @@ if __name__ == '__main__':
     from util.log_setup import setup_logging
     setup_logging('train')
 
-    print('[TRACE] Parsing options...', flush=True)
     opt = TrainOptions().parse()   # get training options
-    print('[TRACE] Creating dataset...', flush=True)
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     dataset_size = len(dataset)    # get the number of images in the dataset.
     print('The number of training images = %d' % dataset_size)
 
-    print('[TRACE] Creating model...', flush=True)
     model = create_model(opt)      # create a model given opt.model and other options
-    print('[TRACE] Setting up model...', flush=True)
     model.setup(opt)               # regular setup: load and print networks; create schedulers
-    print('[TRACE] Creating visualizer...', flush=True)
     visualizer = Visualizer(opt)   # create a visualizer that display/save images and plots
     total_iters = 0                # the total number of training iterations
-    print('[TRACE] Starting training loop...', flush=True)
 
     for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
         epoch_start_time = time.time()  # timer for entire epoch
@@ -55,7 +49,6 @@ if __name__ == '__main__':
         epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
         visualizer.reset()              # reset the visualizer: make sure it saves the results to HTML at least once every epoch
         model.update_learning_rate()    # update learning rates in the beginning of every epoch.
-        print('[TRACE] Epoch %d: starting data iteration...' % epoch, flush=True)
         for i, data in enumerate(dataset):  # inner loop within one epoch
             if opt.Max_Iteration > 0 and total_iters >= opt.Max_Iteration:
                 break
