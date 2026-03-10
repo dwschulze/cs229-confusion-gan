@@ -3,13 +3,18 @@
 Usage:
     python3 test_confusion_gan.py \
         --input_dir /home/ubuntu/cs229/data/Test_dataset/HnE/processed_data/256x256/ \
-        --output_dir ./results/ \
+        --output_dir ./results/test_confusion_gan/256x256/ \
         --checkpoint ./checkpoints/ConfusionGAN/latest_net_G_A.pth \
         --gpu_id 0
 """
 import argparse
 import os
+from datetime import datetime
 import torch
+try:
+    import intel_extension_for_pytorch as ipex
+except ImportError:
+    ipex = None
 from torchvision import transforms
 from PIL import Image
 from pathlib import Path
@@ -18,22 +23,34 @@ from models.networks import define_G
 
 def main():
     parser = argparse.ArgumentParser(description='Generate virtual IHC from H&E patches')
-    parser.add_argument('--input_dir', required=True, help='Directory of H&E test patches (searched recursively)')
-    parser.add_argument('--output_dir', default='./results', help='Output directory for generated IHC images')
-    parser.add_argument('--checkpoint', required=True, help='Path to trained G_A checkpoint (.pth)')
+    parser.add_argument('--input_dir', default='../../../data/cs229_final_project/Test_dataset/HnE/processed_data/256x256/', help='Directory of H&E test patches (searched recursively)')
+    parser.add_argument('--output_dir', default='./results/test_confusion_gan/256x256', help='Output directory for generated IHC images (timestamp suffix added automatically)')
+    parser.add_argument('--checkpoint', default='./checkpoints/confusion-gan-256-fp16/latest_net_G_A.pth', help='Path to trained G_A checkpoint (.pth)')
     parser.add_argument('--gpu_id', type=int, default=0, help='GPU id (-1 for CPU)')
     parser.add_argument('--img_size', type=int, default=256, help='Image size (default 256)')
+    parser.add_argument('--netG', type=str, default='unet_256', help='Generator architecture [unet_256 | resnet_9blocks]')
     args = parser.parse_args()
+
+    # Log all parameters
+    print('Parameters:')
+    for k, v in vars(args).items():
+        print(f'  {k}: {v}')
+
+    # Append timestamp to output directory
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+    args.output_dir = os.path.join(args.output_dir, timestamp)
 
     # Device
     if args.gpu_id >= 0 and torch.cuda.is_available():
         device = torch.device(f'cuda:{args.gpu_id}')
+    elif hasattr(torch, 'xpu') and torch.xpu.is_available():
+        device = torch.device('xpu')
     else:
         device = torch.device('cpu')
     print(f'Using device: {device}')
 
     # Load generator
-    G_A = define_G(3, 3, 64, 'unet_256', 'instance', True, 'normal', 0.02, [])
+    G_A = define_G(3, 3, 64, args.netG, 'instance', True, 'normal', 0.02, [])
     state_dict = torch.load(args.checkpoint, map_location='cpu')
     # Handle DataParallel wrapping (keys prefixed with 'module.')
     if any(k.startswith('module.') for k in state_dict.keys()):
@@ -84,5 +101,5 @@ def main():
 
 if __name__ == '__main__':
     from util.log_setup import setup_logging
-    setup_logging('test_confusion_gan')
+    setup_logging('test_confusion_gan', subdir='test_confusion_gan')
     main()

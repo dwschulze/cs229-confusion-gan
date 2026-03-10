@@ -23,13 +23,15 @@ class Tee:
         return getattr(self.original, name)
 
 
-def setup_logging(prefix):
-    """Redirect stdout and stderr to both terminal and logs/{prefix}_TIMESTAMP.log."""
+def setup_logging(prefix, subdir=None):
+    """Redirect stdout and stderr to both terminal and logs/[subdir/]{prefix}_TIMESTAMP.log."""
     log_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'logs')
+    if subdir:
+        log_dir = os.path.join(log_dir, subdir)
     os.makedirs(log_dir, exist_ok=True)
 
-    timestamp = datetime.now().strftime('%Y.%m.%d_%H:%M:%S')
-    log_path = os.path.join(log_dir, f'{prefix}_{timestamp}.log')
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+    log_path = os.path.join(log_dir, f'{prefix}.{timestamp}.log')
     log_file = open(log_path, 'w')
 
     sys.stdout = Tee(sys.stdout, log_file)
