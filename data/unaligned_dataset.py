@@ -46,7 +46,11 @@ class UnalignedDataset(BaseDataset):
                 print('[TRACE] Transform done, shape=%s' % str(t.shape), flush=True)
                 self.A_cache.append(t)
             else:
+                if i <= 5:
+                    print('[TRACE] Loading image %d: %s' % (i, p), flush=True)
                 self.A_cache.append(self.transform_A(Image.open(p).convert('RGB')))
+                if i <= 5:
+                    print('[TRACE] Image %d done' % i, flush=True)
             if (i + 1) % 1000 == 0:
                 print('  A: %d / %d' % (i + 1, self.A_size), flush=True)
         print('Pre-loading dataset B (%d images)...' % self.B_size, flush=True)
