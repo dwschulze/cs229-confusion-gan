@@ -75,7 +75,8 @@ class ConfusionGANModel(BaseModel):
 
             # initialize optimizers; schedulers will be automatically created by function <BaseModel.setup>.
             self.optimizer_G = torch.optim.Adam(itertools.chain(self.netG_A.parameters(), self.netG_B.parameters()), lr=opt.lr, betas=(opt.beta1, 0.999))
-            self.optimizer_D = torch.optim.Adam(itertools.chain(self.netD_A.parameters(), self.netD_B.parameters()), lr=opt.lr, betas=(opt.beta1, 0.999))
+            lr_D = getattr(opt, 'lr_D', opt.lr)
+            self.optimizer_D = torch.optim.Adam(itertools.chain(self.netD_A.parameters(), self.netD_B.parameters()), lr=lr_D, betas=(opt.beta1, 0.999))
             self.optimizer_E = torch.optim.Adam(itertools.chain(self.netE_A.parameters(),self.netE_B.parameters()), lr=opt.lr, betas=(opt.beta1, 0.999))
             
             self.optimizers.append(self.optimizer_G)
