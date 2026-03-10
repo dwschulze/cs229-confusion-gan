@@ -31,11 +31,19 @@ class UnalignedDataset(BaseDataset):
 
         # Pre-load and pre-transform all images into RAM to avoid
         # repeated disk I/O for the 32 reference images per iteration
-        print('Pre-loading dataset A (%d images)...' % self.A_size)
-        self.A_cache = [self.transform_A(Image.open(p).convert('RGB')) for p in self.A_paths]
-        print('Pre-loading dataset B (%d images)...' % self.B_size)
-        self.B_cache = [self.transform_B(Image.open(p).convert('RGB')) for p in self.B_paths]
-        print('Pre-loading complete.')
+        print('Pre-loading dataset A (%d images)...' % self.A_size, flush=True)
+        self.A_cache = []
+        for i, p in enumerate(self.A_paths):
+            self.A_cache.append(self.transform_A(Image.open(p).convert('RGB')))
+            if (i + 1) % 1000 == 0:
+                print('  A: %d / %d' % (i + 1, self.A_size), flush=True)
+        print('Pre-loading dataset B (%d images)...' % self.B_size, flush=True)
+        self.B_cache = []
+        for i, p in enumerate(self.B_paths):
+            self.B_cache.append(self.transform_B(Image.open(p).convert('RGB')))
+            if (i + 1) % 1000 == 0:
+                print('  B: %d / %d' % (i + 1, self.B_size), flush=True)
+        print('Pre-loading complete.', flush=True)
 
     def __getitem__(self, index):
         A_path = self.A_paths[index]  # make sure index is within then range
