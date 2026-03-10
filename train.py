@@ -31,7 +31,7 @@ import random
 
 if __name__ == '__main__':
     from util.log_setup import setup_logging
-    setup_logging('train')
+    setup_logging('train', subdir='train')
 
     opt = TrainOptions().parse()   # get training options
     dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
