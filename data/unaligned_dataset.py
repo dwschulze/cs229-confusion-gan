@@ -17,14 +17,18 @@ class UnalignedDataset(BaseDataset):
 
         self.dir_A = opt.data_train_A
         self.dir_B = opt.data_train_B
+        print('[TRACE] Scanning dataset A paths...', flush=True)
         self.A_paths = make_dataset(self.dir_A)
+        print('[TRACE] Found %d A paths. Scanning dataset B paths...' % len(self.A_paths), flush=True)
         self.B_paths = make_dataset(self.dir_B)
+        print('[TRACE] Found %d B paths.' % len(self.B_paths), flush=True)
 
         self.A_size = len(self.A_paths)  # get the size of dataset A
         self.B_size = len(self.B_paths)  # get the size of dataset B
 
+        print('[TRACE] Loading A_labels...', flush=True)
         self.A_labels = torch.load(opt.A_labels) # opt.A_labels is a dictionary
-
+        print('[TRACE] A_labels loaded. Creating transforms...', flush=True)
         self.transform_A = get_transform(self.opt, grayscale=False)
         self.transform_B = get_transform(self.opt, grayscale=False)
         self.transform = get_transform(self.opt, grayscale=False)
