@@ -24,7 +24,7 @@ from models.networks import define_G
 def main():
     parser = argparse.ArgumentParser(description='Generate virtual IHC from H&E patches')
     parser.add_argument('--input_dir', default='../../../data/cs229_final_project/Test_dataset/HnE/processed_data/256x256/', help='Directory of H&E test patches (searched recursively)')
-    parser.add_argument('--output_dir', default='./results/test_confusion_gan/confusion-gan-256-fp16-lambda_idt-0', help='Output directory for generated IHC images (timestamp suffix added automatically)')
+    parser.add_argument('--output_dir', default='./test.results/test_confusion_gan/confusion-gan-256-fp16-lambda_idt-0', help='Output directory for generated IHC images (timestamp suffix added automatically)')
     parser.add_argument('--checkpoint', default='./checkpoints/confusion-gan-256-fp16-lambda_idt-0/latest_net_G_A.pth', help='Path to trained G_A checkpoint (.pth)')
     parser.add_argument('--gpu_id', type=int, default=0, help='GPU id (-1 for CPU)')
     parser.add_argument('--img_size', type=int, default=256, help='Image size (default 256)')
