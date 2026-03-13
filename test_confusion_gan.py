@@ -29,6 +29,7 @@ def main():
     parser.add_argument('--gpu_id', type=int, default=0, help='GPU id (-1 for CPU)')
     parser.add_argument('--img_size', type=int, default=256, help='Image size (default 256)')
     parser.add_argument('--netG', type=str, default='unet_256', help='Generator architecture [unet_256 | resnet_9blocks]')
+    parser.add_argument('--no_dropout', action='store_true', help='no dropout for the generator')
     args = parser.parse_args()
 
     # Log all parameters
@@ -50,7 +51,8 @@ def main():
     print(f'Using device: {device}')
 
     # Load generator
-    G_A = define_G(3, 3, 64, args.netG, 'instance', True, 'normal', 0.02, [])
+    use_dropout = not args.no_dropout
+    G_A = define_G(3, 3, 64, args.netG, 'instance', use_dropout, 'normal', 0.02, [])
     state_dict = torch.load(args.checkpoint, map_location='cpu')
     # Handle DataParallel wrapping (keys prefixed with 'module.')
     if any(k.startswith('module.') for k in state_dict.keys()):

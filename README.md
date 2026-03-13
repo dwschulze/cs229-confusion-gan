@@ -24,21 +24,10 @@ python3 train.py --data_train_A ./dataset/trainA --data_train_B ./dataset/trainB
     --dataset_mode unaligned --direction AtoB 
 ```
 
-## Reference
-If you found our work useful in your research, please consider citing our works(s) at:
-```
-@inproceedings{li2024virtual,
-  title={Virtual immunohistochemistry staining for histological images assisted by weakly-supervised learning},
-  author={Li, Jiahan and Dong, Jiuyang and Huang, Shenjin and Li, Xi and Jiang, Junjun and Fan, Xiaopeng and Zhang, Yongbing},
-  booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
-  pages={11259--11268},
-  year={2024}
-}
-```
-
 🧱 **Built Upon**
 
-Parts of this codebase are adapted from [CycleGAN](https://github.com/junyanz/pytorch-CycleGAN-and-pix2pix).  
+This codebase is based on [ConfusionGAN](https://openaccess.thecvf.com/content/CVPR2024/papers/Li_Virtual_Immunohistochemistry_Staining_for_Histological_Images_Assisted_by_Weakly-supervised_Learning_CVPR_2024_paper.pdf) and its [source code](https://github.com/jiahanli2022/confusion-GAN)  
+We also used the [FD-DINOv2](https://github.com/justin4ai/FD-DINOv2/tree/FD-DINOv2) metric.  
 We thank the original authors for their contributions.
 
 © This code is released under the GPLv3 license and is intended for non-commercial academic research only.
